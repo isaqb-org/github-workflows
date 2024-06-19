@@ -18,29 +18,28 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: Checkout Source
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Verify Gradle Wrapper
-      uses: gradle/wrapper-validation-action@v1
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: gradle/actions/wrapper-validation@v3
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: 17
+        java-version: 21
 
     # If we're building a release, we need to set the variable RELEASE_VERSION
     - name: Set Environment Variables for Release Version
       if: startsWith(github.ref, 'refs/tags/')
       run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> $GITHUB_ENV
 
-    - name: Execute Gradle Build
-      uses: gradle/gradle-build-action@v2
-      env:
-        CI: true
+    - name: Setup Gradle Build
+      uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: wrapper
-        arguments: buildDocs
+    - name: Execute Gradle build
+      run: ./gradlew buildDocs
 
     # release and deploy only if we're building a release
     - name: Prepare Deployment
@@ -68,7 +67,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy
       if: startsWith(github.ref, 'refs/tags/')
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./build
