@@ -2,10 +2,6 @@ name: Reusable Workflow for updating Pull Request with Comment
 
 on:
   workflow_call:
-    inputs:
-      release_version:
-        required: true
-        type: string
 
 jobs:
   comment:
