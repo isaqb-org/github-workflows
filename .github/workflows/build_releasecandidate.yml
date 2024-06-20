@@ -2,10 +2,6 @@ name: Reusable Workflow for Release Candidates
 
 on:
   workflow_call:
-    inputs:
-      release_version:
-        required: true
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -54,7 +50,7 @@ jobs:
           zip -r release.zip ./build
           mkdir release_dir
           cp ./build/curriculum-*.pdf ./release_dir 2>/dev/null || :
-          mv release.zip ./release_dir/release-${{ env.release_version }}.zip
+          mv release.zip ./release_dir/release-${{ env.RELEASE_VERSION }}.zip
       - name: Create New Release Candidate
         if: startsWith(github.ref, 'refs/tags/')
         id: create-release-candidate
@@ -62,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag: ${{ env.release_version }}
-          name: Release Candidate ${{ env.release_version }}
+          tag: ${{ env.RELEASE_VERSION }}
+          name: Release Candidate ${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: true
           bodyFile: "CHANGELOG.md"
@@ -79,4 +75,4 @@ jobs:
           keep_files: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: Publish Release Candidate ${{ env.release_version }}
+          commit_message: Publish Release Candidate ${{ env.RELEASE_VERSION }}
