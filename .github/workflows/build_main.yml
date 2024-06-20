@@ -2,10 +2,6 @@ name: Reusable Build Workflow
 
 on:
   workflow_call:
-    inputs:
-      release_version:
-        required: true
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -50,7 +46,7 @@ jobs:
         zip -r release.zip ./build
         mkdir release_dir
         cp ./build/curriculum-*.pdf ./release_dir 2>/dev/null || :
-        mv release.zip ./release_dir/release-${{ inputs.release_version }}.zip
+        mv release.zip ./release_dir/release-${{ env.RELEASE_VERSION }}.zip
     - name: Create New Release
       if: startsWith(github.ref, 'refs/tags/')
       id: create-release
@@ -58,8 +54,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
-        tag: ${{ inputs.release_version }}
-        name: Release ${{ inputs.release_version }}
+        tag: ${{ env.RELEASE_VERSION }}
+        name: Release ${{ env.RELEASE_VERSION }}
         draft: false
         prerelease: false
         bodyFile: "CHANGELOG.md"
@@ -73,4 +69,4 @@ jobs:
         publish_dir: ./build
         user_name: 'github-actions[bot]'
         user_email: 'github-actions[bot]@users.noreply.github.com'
-        commit_message: Publish Release ${{ inputs.release_version }}
+        commit_message: Publish Release ${{ env.RELEASE_VERSION }}
