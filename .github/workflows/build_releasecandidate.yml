@@ -39,7 +39,7 @@ jobs:
         with:
           gradle-version: wrapper
       - name: Execute Gradle build
-        run: ./gradlew buildDocs
+        run: ./gradle-tools/gradlew buildDocs
 
       # do the following two things only for a release!
       - name: Prepare Deployment

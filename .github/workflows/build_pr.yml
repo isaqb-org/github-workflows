@@ -29,7 +29,7 @@ jobs:
         with:
           gradle-version: wrapper
       - name: Execute Gradle build
-        run: ./gradlew buildDocs
+        run: ./gradle-tools/gradlew buildDocs
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
