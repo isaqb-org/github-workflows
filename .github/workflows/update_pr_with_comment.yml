@@ -3,6 +3,10 @@ name: Reusable Workflow for updating Pull Request with Comment
 on:
   workflow_call:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   comment:
     if: ${{ github.event.workflow_run.conclusion == 'success' }} && ${{github.event_name == 'pull_request' }}
