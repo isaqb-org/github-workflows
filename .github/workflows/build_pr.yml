@@ -1,38 +1,11 @@
-name: Reusable Workflow for Pull Requests
+name: Build Pull Request
 
 on:
   workflow_call:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout Source
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 21
-      - name: Setup Gradle Build
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: wrapper
-      - name: Execute Gradle build
-        run: ./gradle-tools/gradlew buildDocs
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: curriculum files (PDF and HTML)
-          path: |
-            build/*.pdf
-            build/*.html
-          retention-days: 10
+    uses: ./.github/workflows/build.yml
+    with:
+      upload-artifacts: true
+    secrets: inherit
