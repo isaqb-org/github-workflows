@@ -1,0 +1,10 @@
+### JetBrains
+# JetBrains IDE directory
+.idea/
+
+# File-based project format
+*.iws
+*.iml
+
+# IntelliJ build output
+out/
