@@ -97,6 +97,7 @@ jobs:
           draft: false
           prerelease: ${{ inputs.release-is-prerelease }}
           bodyFile: "CHANGELOG.md"
+          generateReleaseNotes: true
           artifacts: "license-copyright/LICENSE.adoc,release_dir/*.pdf,release_dir/*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
