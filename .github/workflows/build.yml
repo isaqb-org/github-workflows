@@ -35,6 +35,10 @@ on:
         description: 'Keep existing files in deploy destination'
         type: boolean
         default: false
+      keep-release-body-on-update:
+        description: 'Keep the text of a release that already exists (e.g. created via the GitHub UI) instead of replacing it with CHANGELOG.md'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -98,6 +102,9 @@ jobs:
           prerelease: ${{ inputs.release-is-prerelease }}
           bodyFile: "CHANGELOG.md"
           generateReleaseNotes: true
+          # Release may already exist when it was created via the GitHub UI
+          allowUpdates: true
+          omitBodyDuringUpdate: ${{ inputs.keep-release-body-on-update }}
           artifacts: "license-copyright/LICENSE.adoc,release_dir/*.pdf,release_dir/*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
