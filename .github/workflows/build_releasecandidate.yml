@@ -14,5 +14,4 @@ jobs:
       deploy: true
       deploy-destination-dir: 'release-candidate'
       deploy-keep-files: true
-      keep-release-body-on-update: true
     secrets: inherit

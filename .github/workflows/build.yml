@@ -16,7 +16,7 @@ on:
         type: boolean
         default: false
       release-is-prerelease:
-        description: 'Mark release as prerelease'
+        description: 'Mark release as prerelease. Text entered in the GitHub UI is kept for prereleases (unless empty).'
         type: boolean
         default: false
       release-name-prefix:
@@ -33,10 +33,6 @@ on:
         default: ''
       deploy-keep-files:
         description: 'Keep existing files in deploy destination'
-        type: boolean
-        default: false
-      keep-release-body-on-update:
-        description: 'Keep the text of a release that already exists (e.g. created via the GitHub UI) instead of replacing it with CHANGELOG.md'
         type: boolean
         default: false
 
@@ -92,6 +88,67 @@ jobs:
           cp ./build/curriculum-*.pdf ./release_dir 2>/dev/null || :
           mv release.zip ./release_dir/release-${{ env.RELEASE_VERSION }}.zip
 
+      - name: Prepare Release Body
+        if: inputs.create-release && startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          IS_PRERELEASE: ${{ inputs.release-is-prerelease }}
+        run: |
+          # Release candidates keep non-empty text entered in the GitHub UI
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            if existing=$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_VERSION" --jq '.body // ""' 2> "$RUNNER_TEMP/gh_error"); then
+              if [ -n "${existing//[[:space:]]/}" ]; then
+                echo "Keeping the release text entered in the GitHub UI"
+                printf '%s\n' "$existing" > release_body.md
+                exit 0
+              fi
+            elif ! grep -q 'HTTP 404' "$RUNNER_TEMP/gh_error"; then
+              # Fail on real errors; 404 only means the release does not exist yet
+              cat "$RUNNER_TEMP/gh_error" >&2
+              exit 1
+            fi
+          fi
+
+          # Tag the generated release notes compare against:
+          #   2027.1-rev0 -> previous release                 (2025.1-rev2)
+          #   2027.1-RC1  -> latest release                   (2025.1-rev2)
+          #   2027.1-RC2  -> previous RC of the same series   (2027.1-RC1)
+          tags=$(git ls-remote --tags --refs origin | sed 's|.*refs/tags/||')
+          series=${RELEASE_VERSION%-*}                       # e.g. 2027.1
+          releases_re='^[0-9]{4}\.[0-9]+-rev[0-9]+$'
+          series_rcs_re="^${series//./\\.}-RC[0-9]+\$"
+
+          # Prints the tag matching regex $1 that sorts (by version) directly before $2
+          tag_before() {
+            { grep -E "$1" <<< "$tags" || true; echo "$2"; } \
+              | sort -V -u \
+              | awk -v v="$2" '$0 == v { print prev; exit } { prev = $0 }'
+          }
+
+          case "$RELEASE_VERSION" in
+            *-RC*)
+              previous=$(tag_before "$series_rcs_re" "$RELEASE_VERSION")
+              # First RC of the series: "2027.1" sorts before all 2027.1-* tags
+              [ -n "$previous" ] || previous=$(tag_before "$releases_re" "$series")
+              ;;
+            *)
+              previous=$(tag_before "$releases_re" "$RELEASE_VERSION")
+              ;;
+          esac
+          echo "Release notes for $RELEASE_VERSION compare against: ${previous:-<chosen by GitHub>}"
+
+          notes_args=(-f tag_name="$RELEASE_VERSION")
+          [ -z "$previous" ] || notes_args+=(-f previous_tag_name="$previous")
+
+          # CHANGELOG.md followed by the generated release notes
+          {
+            cat CHANGELOG.md
+            printf '\n\n'
+            gh api "repos/$GH_REPO/releases/generate-notes" "${notes_args[@]}" --jq .body
+          } > release_body.md
+
       - name: Create Release
         if: inputs.create-release && startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
@@ -100,11 +157,10 @@ jobs:
           name: ${{ inputs.release-name-prefix }} ${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: ${{ inputs.release-is-prerelease }}
-          bodyFile: "CHANGELOG.md"
-          generateReleaseNotes: true
+          # Built in the previous step: kept UI text, or CHANGELOG.md + generated release notes
+          bodyFile: "release_body.md"
           # Release may already exist when it was created via the GitHub UI
           allowUpdates: true
-          omitBodyDuringUpdate: ${{ inputs.keep-release-body-on-update }}
           artifacts: "license-copyright/LICENSE.adoc,release_dir/*.pdf,release_dir/*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
