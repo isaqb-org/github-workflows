@@ -72,10 +72,12 @@ jobs:
         if: inputs.upload-artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: curriculum files (PDF and HTML)
+          name: curriculum files (PDF, HTML, Markdown and llms.txt)
           path: |
             build/*.pdf
             build/*.html
+            build/*.md
+            build/llms.txt
           retention-days: 10
 
       - name: Prepare Deployment

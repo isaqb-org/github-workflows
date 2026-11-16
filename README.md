@@ -5,6 +5,10 @@ Repository contains the GitHub workflows for the various GitHub Actions for curr
 
 A release can be created either by pushing a tag or by creating a release in the GitHub UI.
 In both cases the workflow builds the curriculum and attaches the PDFs, the ZIP and the license to the release.
+Curricula that build Markdown (`FORMATS="pdf html md"` in `build.config`, curriculum builder only) have the Markdown files in the ZIP.
+They are also published to GitHub Pages together with an `llms.txt` (see [llmstxt.org](https://llmstxt.org)) that lists the Markdown, PDF and HTML files for AI agents.
+The `llms.txt` is written by the curriculum builder during the build (curriculum builder image with `llms.txt` support required).
+Release candidates get their own `llms.txt` in `release-candidate/`.
 
 The release text is the content of `CHANGELOG.md`, followed by GitHub's generated release notes.
 The generated notes list the changes compared to:
